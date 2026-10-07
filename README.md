@@ -5,7 +5,7 @@ Proyecto desarrollado para el laboratorio de Ingeniería del Software II (curso 
 
 ## Equipo
 
-Empresa: por definir 
+Empresa: AlohaRent 
 
 Integrantes:
 
@@ -15,9 +15,9 @@ Integrantes:
 - Alberto López Alcázar
 - Daniel Fernandez Palacios
 
-Portavoz:
+Portavoz: 
 
-- por definir
+- Daniel Fernandez Palacios
 
 Desarrollar una plataforma para la gestión de alquiler de viviendas siguiendo un proceso iterativo e incremental de ingeniería del software.
 
