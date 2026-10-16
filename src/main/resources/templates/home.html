@@ -1,11 +1,30 @@
-<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Rental Platform</title>
-  </head>
-  <body>
-    <h1>Plataforma de alquiler de viviendas</h1>
-    <p>Aplicación Spring Boot en ejecución.</p>
-  </body>
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Rental Platform - Inicio</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 2rem; }
+        .nav-links a { margin-right: 1rem; text-decoration: none; color: #007bff; font-weight: bold; }
+        .user-info { background: #e9ecef; padding: 1rem; border-radius: 6px; display: inline-block; }
+    </style>
+</head>
+<body>
+    <h1>Bienvenido a Rental Platform</h1>
+
+    <!-- Si no ha iniciado sesión -->
+    <div th:if="${session.loggedUser == null}" class="nav-links">
+        <a th:href="@{/login}">Iniciar Sesión</a>
+        <a th:href="@{/register}">Registrarse</a>
+    </div>
+
+    <!-- Si ya ha iniciado sesión -->
+    <div th:if="${session.loggedUser != null}">
+        <div class="user-info">
+            <p>Hola, <strong th:text="${session.loggedUser.name}">Usuario</strong>!</p>
+            <p>Rol: <span th:text="${session.loggedUser.role}">TENANT</span></p>
+            <a th:href="@{/logout}">Cerrar Sesión</a>
+        </div>
+    </div>
+</body>
 </html>
