@@ -1,30 +1,136 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Rental Platform - Inicio</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 2rem; }
-        .nav-links a { margin-right: 1rem; text-decoration: none; color: #007bff; font-weight: bold; }
-        .user-info { background: #e9ecef; padding: 1rem; border-radius: 6px; display: inline-block; }
-    </style>
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout/head :: head('Alojamientos Exclusivos')}">
+  <meta charset="UTF-8" />
+  <title>Alojamientos Exclusivos | AlohaRent</title>
 </head>
-<body>
-    <h1>Bienvenido a Rental Platform</h1>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex flex-col justify-between">
 
-    <!-- Si no ha iniciado sesión -->
-    <div th:if="${session.loggedUser == null}" class="nav-links">
-        <a th:href="@{/login}">Iniciar Sesión</a>
-        <a th:href="@{/register}">Registrarse</a>
-    </div>
+  <!-- Cabecera Global con Buscador Integrado -->
+  <div th:replace="~{fragments/layout/header :: navbar}"></div>
 
-    <!-- Si ya ha iniciado sesión -->
-    <div th:if="${session.loggedUser != null}">
-        <div class="user-info">
-            <p>Hola, <strong th:text="${session.loggedUser.name}">Usuario</strong>!</p>
-            <p>Rol: <span th:text="${session.loggedUser.role}">TENANT</span></p>
-            <a th:href="@{/logout}">Cerrar Sesión</a>
+  <main class="flex-grow">
+    
+    <!-- Banner de bienvenida cuando el usuario ha iniciado sesión -->
+    <div th:replace="~{fragments/components/banner :: welcome-banner}"></div>
+
+    <!-- Hero Section con Buscador Principal Destacado (Estilo Airbnb) -->
+    <section class="relative overflow-hidden bg-gradient-to-b from-sky-50/70 via-emerald-50/40 to-slate-50 py-12 md:py-16 border-b border-slate-200/60">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold uppercase tracking-wider mb-4">
+          <svg class="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+          AlohaRent Experiencias
+        </span>
+
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 mb-4">
+          Encuentra tu próximo hogar con <br/>
+          <span class="bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 bg-clip-text text-transparent">
+            AlohaRent
+          </span>
+        </h1>
+        
+        <p class="max-w-2xl mx-auto text-base sm:text-lg text-slate-600 mb-10">
+          Reserva casas enteras, apartamentos céntricos y villas vacacionales con la máxima garantía y confort.
+        </p>
+
+        <!-- Buscador Principal Prominente (Estilo Barra Expandida Airbnb) -->
+        <div class="max-w-4xl mx-auto bg-white rounded-3xl md:rounded-full p-2.5 sm:p-3 shadow-xl shadow-slate-200/80 border border-slate-200 hover:shadow-2xl transition-all">
+          <form action="/" method="GET" class="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-100 items-center">
+            
+            <!-- Campo Destino -->
+            <div class="px-5 py-3 text-left hover:bg-slate-50 rounded-2xl md:rounded-full transition-colors cursor-pointer group">
+              <label for="main-destination" class="block text-xs font-bold uppercase tracking-wider text-slate-500 group-hover:text-emerald-700">
+                Destino
+              </label>
+              <input 
+                id="main-destination" 
+                name="destination" 
+                type="text" 
+                placeholder="¿A dónde quieres ir?" 
+                class="w-full bg-transparent text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none"
+              />
+            </div>
+
+            <!-- Campo Fechas de Entrada -->
+            <div class="px-5 py-3 text-left hover:bg-slate-50 rounded-2xl md:rounded-full transition-colors cursor-pointer group">
+              <label for="main-checkin" class="block text-xs font-bold uppercase tracking-wider text-slate-500 group-hover:text-sky-700">
+                Llegada
+              </label>
+              <input 
+                id="main-checkin" 
+                name="checkin" 
+                type="date" 
+                class="w-full bg-transparent text-sm font-semibold text-slate-700 focus:outline-none"
+              />
+            </div>
+
+            <!-- Campo Fechas de Salida -->
+            <div class="px-5 py-3 text-left hover:bg-slate-50 rounded-2xl md:rounded-full transition-colors cursor-pointer group">
+              <label for="main-checkout" class="block text-xs font-bold uppercase tracking-wider text-slate-500 group-hover:text-sky-700">
+                Salida
+              </label>
+              <input 
+                id="main-checkout" 
+                name="checkout" 
+                type="date" 
+                class="w-full bg-transparent text-sm font-semibold text-slate-700 focus:outline-none"
+              />
+            </div>
+
+            <!-- Campo Huéspedes y Botón de Búsqueda -->
+            <div class="px-4 py-3 flex items-center justify-between text-left hover:bg-slate-50 rounded-2xl md:rounded-full transition-colors group">
+              <div class="flex-grow pr-2">
+                <label for="main-guests" class="block text-xs font-bold uppercase tracking-wider text-slate-500 group-hover:text-emerald-700">
+                  Viajeros
+                </label>
+                <select id="main-guests" name="guests" class="w-full bg-transparent text-sm font-semibold text-slate-700 focus:outline-none cursor-pointer">
+                  <option value="1">1 Huésped</option>
+                  <option value="2" selected>2 Huéspedes</option>
+                  <option value="3">3 Huéspedes</option>
+                  <option value="4">4+ Huéspedes</option>
+                </select>
+              </div>
+
+              <button 
+                type="submit" 
+                class="flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-sky-600 hover:from-emerald-600 hover:to-sky-700 text-white font-bold rounded-full shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all transform active:scale-95"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <span class="text-sm">Buscar</span>
+              </button>
+            </div>
+
+          </form>
         </div>
-    </div>
+
+      </div>
+    </section>
+
+    <!-- Catálogo de Alojamientos -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <!-- Estado vacío cuando no hay alojamientos registrados -->
+      <div class="text-center py-16 px-4 bg-white rounded-3xl border border-slate-200/80 shadow-sm max-w-xl mx-auto">
+        <div class="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4 border border-emerald-100 shadow-xs">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+          </svg>
+        </div>
+        <h2 class="text-xl font-bold text-slate-900 mb-2">No hay alojamientos disponibles</h2>
+        <p class="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+          Actualmente no hay inmuebles registrados en la plataforma. Esta sección estará activa cuando se conecte con el catálogo de alojamientos.
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Pie de Página Global -->
+  <footer th:replace="~{fragments/layout/footer :: footer}"></footer>
+
 </body>
 </html>

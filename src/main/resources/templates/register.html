@@ -1,51 +1,125 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Registro - Rental Platform</title>
-    <style>
-        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f4f6f9; }
-        .card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 320px; }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; margin-bottom: 0.4rem; font-weight: bold; }
-        input, select { width: 100%; padding: 0.5rem; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        button { width: 100%; padding: 0.7rem; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; }
-        button:hover { background-color: #218838; }
-        .alert-error { color: #721c24; background-color: #f8d7da; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; }
-    </style>
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout/head :: head('Crear Cuenta')}">
+  <meta charset="UTF-8" />
+  <title>Crear Cuenta | AlohaRent</title>
 </head>
-<body>
-<div class="card">
-    <h2>Crear Cuenta</h2>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex flex-col justify-between">
 
-    <div th:if="${error}" class="alert-error" th:text="${error}"></div>
+  <!-- Cabecera Global con Buscador Integrado (visible en todas las pestañas) -->
+  <div th:replace="~{fragments/layout/header :: navbar}"></div>
 
-    <form th:action="@{/register}" method="post">
-        <div class="form-group">
-            <label for="name">Nombre completo:</label>
-            <input type="text" id="name" name="name" required />
+  <main class="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full bg-white rounded-3xl p-8 sm:p-10 shadow-xl shadow-slate-200/70 border border-slate-100">
+      
+      <!-- Encabezado de la tarjeta -->
+      <div class="text-center mb-8">
+        <div class="inline-flex w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-sky-600 items-center justify-center text-white shadow-md shadow-emerald-500/25 mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+          </svg>
         </div>
-        <div class="form-group">
-            <label for="email">Correo electrónico:</label>
-            <input type="email" id="email" name="email" required />
-        </div>
-        <div class="form-group">
-            <label for="password">Contraseña:</label>
-            <input type="password" id="password" name="password" required />
-        </div>
-        <div class="form-group">
-            <label for="role">Tipo de usuario:</label>
-            <select id="role" name="role">
-                <option value="TENANT">Inquilino (Tenant)</option>
-                <option value="LANDLORD">Propietario (Landlord)</option>
-            </select>
-        </div>
-        <button type="submit">Registrarse</button>
-    </form>
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Crear cuenta</h1>
+        <p class="text-sm text-slate-500 mt-1.5">Únete a la comunidad de viajeros y anfitriones de AlohaRent</p>
+      </div>
 
-    <p style="text-align: center; margin-top: 1rem;">
-        ¿Ya tienes cuenta? <a th:href="@{/login}">Inicia sesión</a>
-    </p>
-</div>
+      <!-- Alerta de error -->
+      <div th:if="${error}" class="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
+        <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        <span th:text="${error}">Error al registrar la cuenta.</span>
+      </div>
+
+      <!-- Formulario de registro -->
+      <form th:action="@{/register}" method="post" class="space-y-4">
+        
+        <div>
+          <label for="name" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+            Nombre y Apellidos
+          </label>
+          <input 
+            id="name" 
+            name="name" 
+            type="text" 
+            required 
+            placeholder="María López García"
+            class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
+          />
+        </div>
+
+        <div>
+          <label for="email" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+            Correo electrónico
+          </label>
+          <input 
+            id="email" 
+            name="email" 
+            type="email" 
+            required 
+            placeholder="maria@ejemplo.com"
+            class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all"
+          />
+        </div>
+
+        <div>
+          <label for="password" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+            Contraseña
+          </label>
+          <input 
+            id="password" 
+            name="password" 
+            type="password" 
+            required 
+            placeholder="Mínimo 8 caracteres"
+            class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all"
+          />
+        </div>
+
+        <div>
+          <label for="role" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+            Tipo de cuenta
+          </label>
+          <select 
+            id="role" 
+            name="role" 
+            class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all cursor-pointer"
+          >
+            <option value="TENANT">Inquilino (Viajero / Huésped)</option>
+            <option value="LANDLORD">Propietario (Anfitrión / Publicar alojamientos)</option>
+          </select>
+        </div>
+
+        <button 
+          type="submit" 
+          class="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-700 hover:to-sky-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/30 transition-all transform active:scale-[0.98] mt-2"
+        >
+          Registrarse en AlohaRent
+        </button>
+      </form>
+
+      <!-- Divisor -->
+      <div class="my-6 flex items-center">
+        <div class="flex-grow border-t border-slate-200"></div>
+        <span class="px-3 text-xs text-slate-400 uppercase tracking-wider font-medium">o</span>
+        <div class="flex-grow border-t border-slate-200"></div>
+      </div>
+
+      <!-- Enlace a login -->
+      <div class="text-center">
+        <p class="text-xs text-slate-600">
+          ¿Ya tienes cuenta en AlohaRent?
+          <a th:href="@{/login}" class="font-bold text-sky-600 hover:text-sky-700 transition-colors ml-1">
+            Inicia sesión aquí
+          </a>
+        </p>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Pie de Página Global -->
+  <footer th:replace="~{fragments/layout/footer :: footer}"></footer>
+
 </body>
 </html>

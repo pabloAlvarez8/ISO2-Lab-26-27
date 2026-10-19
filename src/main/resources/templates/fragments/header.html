@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="html-head(title)">
+  <th:block th:replace="~{fragments/layout/head :: head(${title})}"></th:block>
+</head>
+<body>
+  <!-- Header global con buscador visible en todas las pestañas (Envoltorio de compatibilidad) -->
+  <div th:fragment="navbar">
+    <div th:replace="~{fragments/layout/header :: navbar}"></div>
+  </div>
+
+  <!-- Footer global (Envoltorio de compatibilidad) -->
+  <div th:fragment="footer">
+    <div th:replace="~{fragments/layout/footer :: footer}"></div>
+  </div>
+</body>
+</html>
