@@ -29,7 +29,10 @@ public class HomeController {
     }
 
     @GetMapping("/")
-    public String home() {
+    public String home(Model model) {
+        List<Property> properties = propertyService.getAllProperties();
+        model.addAttribute("inmuebles", properties);
+        model.addAttribute("properties", properties);
         return "home";
     }
 
@@ -70,6 +73,7 @@ public class HomeController {
         List<Property> allProperties = propertyService.getAllAvailableProperties();
 
         model.addAttribute("properties", allProperties);
+        model.addAttribute("inmuebles", allProperties);
         model.addAttribute("filteredProperties", result.getProperties());
         model.addAttribute("searchError", result.getErrorMessage());
         model.addAttribute("destination", effectiveDestination != null ? effectiveDestination.trim() : "");

@@ -19,6 +19,46 @@ public class PropertyService {
         this.propertyRepository = propertyRepository;
     }
 
+    @Transactional
+    public Property registerProperty(Property property) {
+        if (property == null) {
+            throw new IllegalArgumentException("El inmueble no puede ser nulo");
+        }
+        // 1. Validar si ya existe un inmueble con la misma dirección
+        if (property.getAddress() != null && propertyRepository.existsByAddress(property.getAddress())) {
+            throw new IllegalStateException("Ya existe un inmueble registrado con esa misma dirección.");
+        }
+
+        // 2. Lógica de negocio y validaciones
+        if (property.getPricePerNight() < 0) {
+            throw new IllegalArgumentException("El precio por noche no puede ser negativo");
+        }
+        if (property.getCapacity() <= 0) {
+            throw new IllegalArgumentException("La capacidad debe ser mayor que 0");
+        }
+
+        // Sincronización defensiva de atributos para búsqueda
+        if (property.getTitle() == null && property.getAddress() != null) {
+            property.setTitle(property.getAddress());
+        }
+        if (property.getCity() == null && property.getDestination() != null) {
+            property.setCity(property.getDestination());
+        }
+        if (property.getPropertyType() == null && property.getType() != null) {
+            property.setPropertyType(property.getType());
+        }
+        if (property.getAvailable() == null) {
+            property.setAvailable(true);
+        }
+
+        // 3. Persistir en la base de datos
+        return propertyRepository.save(property);
+    }
+
+    public List<Property> getAllProperties() {
+        return propertyRepository.findAll();
+    }
+
     public List<Property> getAllAvailableProperties() {
         return propertyRepository.findByAvailableTrue();
     }
