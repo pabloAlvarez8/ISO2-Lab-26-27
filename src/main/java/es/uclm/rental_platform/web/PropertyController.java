@@ -2,6 +2,9 @@ package es.uclm.rental_platform.web;
 
 import es.uclm.rental_platform.domain.Property;
 import es.uclm.rental_platform.service.PropertyService;
+import jakarta.servlet.http.HttpSession;
+import es.uclm.rental_platform.persistence.User;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +22,14 @@ public class PropertyController {
 
     // GET: Se ejecuta cuando el usuario entra en la URL para ver el formulario
     @GetMapping("/inmuebles/alta")
-    public String showRegistrationForm() {
+    public String showRegistrationForm(HttpSession session) {
+        User loggedUser = (User) session.getAttribute("loggedUser");
+        
+        // Si no está logueado o no es un LANDLORD, lo redirigimos al login o inicio
+        if (loggedUser == null || !"LANDLORD".equals(loggedUser.getRole())) {
+            return "redirect:/login"; 
+        }
+        
         return "properties"; // Devuelve el archivo properties.html de la carpeta templates
     }
 
