@@ -96,3 +96,10 @@ For each relevant AI-assisted task, record:
 - **Human Review & Adjustments:** Human developer reviewed and approved the implementation plan prior to modification; confirmed incremental multi-commit roadmap for traceability; verified edge cases such that matching check-out and check-in days do not trigger false positive overlaps.
 - **Verification Executed:** `.\mvnw.cmd test` and `.\mvnw.cmd verify` passing 100% (67/67 tests passing).
 
+### Entry 1.11 — Resolution of Merge Conflicts across Property Domain, Persistence, Service, and Web Controllers (chore/pr-35-conflict-fix)
+- **Date:** 2026-10-20
+- **Branch / Task:** `chore/pr-35-conflict-fix` — Resolve merge conflicts between branch `origin/develop` (PR #34, Issues #23 and #31) and PR #35 (Search vertical slice and reactive UI filters), unifying the `Property` domain entity, repository query mechanisms, service validation/search logic, and home web controller without dropping any functionality.
+- **AI Proposal Summary:** Proposed and implemented unified `Property.java` combining UML domain fields (`address`, `destination`, `type`, `directBooking`) and extended search fields (`title`, `city`, `propertyType`, `available`, `rating`, `reviewCount`) with bidirectional defensive synchronization in constructors and setters; merged `PropertyRepository` providing `existsByAddress`, `findByAvailableTrue`, and multi-criteria JPQL query with `COALESCE` handling; combined `PropertyService` with transactional property registration, defensive field syncing, and multi-parameter search; updated `HomeController` to provide both `"inmuebles"` and `"properties"` to the view model; and documented risks R-03, R-04, and R-05 with technical mitigations in `docs/risks/README.md`.
+- **Human Review & Adjustments:** Human developer reviewed and approved the implementation plan prior to modification, requesting explicit documentation and resolution of risks in `docs/risks/README.md`.
+- **Verification Executed:** Executed `.\mvnw.cmd clean test-compile`, `.\mvnw.cmd test`, and `.\mvnw.cmd verify` (DoD required) with 100% passing rate (67/67 tests passing, `BUILD SUCCESS`).
+
