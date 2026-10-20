@@ -103,3 +103,22 @@ For each relevant AI-assisted task, record:
 - **Human Review & Adjustments:** Human developer reviewed and approved the implementation plan prior to modification, requesting explicit documentation and resolution of risks in `docs/risks/README.md`.
 - **Verification Executed:** Executed `.\mvnw.cmd clean test-compile`, `.\mvnw.cmd test`, and `.\mvnw.cmd verify` (DoD required) with 100% passing rate (67/67 tests passing, `BUILD SUCCESS`).
 
+### Entry 1.12 — Review and Rating System, Generic H2 Dataset, and Scrollable Reviews View (chore/pr-35-conflict-fix)
+- **Date:** 2026-10-21
+- **Branch / Task:** `chore/pr-35-conflict-fix` — Implement a functional star rating and review subsystem (ratings 0.5 to 5.0 in increments of 0.5 with text comments), atomic recalculation of property rating/reviewCount, generic dataset in `data.sql`, and a dedicated scrollable reviews section with review counter on the accommodation page.
+- **AI Proposal Summary:** Created `Review.java` entity in `domain` and `ReviewRepository` in `repository`; developed `ReviewService` with input validation (0.5 to 5.0 range and half-star multiples), text length constraints, and atomic recalculation/persistence of `Property.rating` and `Property.reviewCount`; added endpoints `GET /properties/{propertyId}` and `POST /properties/{propertyId}/reviews` in `PropertyController`; created `fragments/components/reviews.html` reusable fragment featuring review counter, vertical scrollable container (`max-h-96 overflow-y-auto`), and interactive star rating form; created `property-detail.html` and updated `book-property.html`, `search.html` and `home.html` with direct navigation links; added `src/main/resources/data.sql` with representative accommodation catalog and genuine reviews, configuring `spring.jpa.defer-datasource-initialization=true`; isolated the test environment with `src/test/resources/application.properties` (`spring.sql.init.mode=never`); and documented risks R-06, R-07, and R-08 in `docs/risks/README.md`.
+- **Human Review & Adjustments:** Human developer reviewed and approved the implementation plan prior to modification, instructing to document and mitigate risks under `docs/risks/` and adhere strictly to project rules.
+- **Verification Executed:** Executed `.\mvnw.cmd clean test-compile`, `.\mvnw.cmd test` (67/67 tests passing), and `.\mvnw.cmd verify` (DoD required) with `BUILD SUCCESS`.
+
+### Entry 1.13 — Interactive Half-Star Rating Selector Component (chore/pr-35-conflict-fix)
+- **Date:** 2026-10-21
+- **Branch / Task:** `chore/pr-35-conflict-fix` — Replace the dropdown menu rating selector with an interactive 5-star visual component that dynamically fills half-by-half (0.5 to 5.0) upon mouse hover and click.
+- **AI Proposal Summary:** Updated `fragments/components/reviews.html` to integrate SVG-based star containers with dual half-targets (`data-rating` from 0.5 to 5.0 in 0.5 increments), dynamic clip-filling amber layers, live text badges, and synchronization into `<input type="hidden" name="rating">`; documented risk R-09 in `docs/risks/README.md`.
+- **Human Review & Adjustments:** Human developer reviewed and approved the implementation plan prior to modification, requesting to mitigate risks and proceed without altering any other components.
+- **Verification Executed:** Executed `.\mvnw.cmd clean test-compile`, `.\mvnw.cmd test` (67/67 tests passing), and `.\mvnw.cmd verify` (DoD required) with `BUILD SUCCESS`.
+### Entry 1.14 — Home Page Property Card Image Banner Integration (feat/22-valoraciones)
+- **Date:** 2026-10-21
+- **Branch / Task:** `feat/22-valoraciones` — Add property image banners to accommodation cards on the home page (`home.html`) with fallback image support and link navigation.
+- **AI Proposal Summary:** Updated `home.html` to include a header image container (`relative h-48 overflow-hidden bg-slate-100`) for each property card, evaluating `prop.imageUrl` with a high-resolution Unsplash fallback, repositioning the accommodation type badge over the image, and wrapping the image in an anchor linking to `/properties/{id}`; documented risk R-10 in `docs/risks/README.md`.
+- **Human Review & Adjustments:** Human developer reviewed and approved the implementation plan prior to modification.
+- **Verification Executed:** Executed `.\mvnw.cmd test` (67/67 tests passing) and `.\mvnw.cmd verify` (DoD required) with `BUILD SUCCESS`.
