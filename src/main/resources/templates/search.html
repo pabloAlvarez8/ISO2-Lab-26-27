@@ -33,12 +33,12 @@
       </div>
     </div>
 
-    <!-- Alerta en caso de validación en servidor (ej. fechas incoherentes) -->
-    <div th:if="${searchError != null}" class="mb-6 px-5 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-center gap-3 shadow-sm">
+    <!-- Alerta en caso de validación en servidor o cliente (ej. fechas incoherentes) -->
+    <div id="search-error-alert" th:classappend="${searchError != null} ? '' : 'hidden'" class="mb-6 px-5 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-center gap-3 shadow-sm">
       <svg class="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
       </svg>
-      <span class="text-sm font-semibold" th:text="${searchError}">Error en la búsqueda</span>
+      <span id="search-error-text" class="text-sm font-semibold" th:text="${searchError}">Error en la búsqueda</span>
     </div>
 
     <!-- Layout principal de 2 columnas -->
@@ -403,6 +403,8 @@
       const noResultsDesc = document.getElementById('no-results-desc');
       
       const resultsCountEl = document.getElementById('results-count');
+      const searchErrorAlert = document.getElementById('search-error-alert');
+      const searchErrorText = document.getElementById('search-error-text');
       const noResultsContainer = document.getElementById('no-results');
       const propertiesGrid = document.getElementById('properties-grid');
       const cards = Array.from(document.querySelectorAll('.property-card'));
@@ -432,6 +434,28 @@
         const reviewsStepIdx = parseInt(reviewsSlider.value, 10) || 0;
         const minReviewsVal = REVIEW_STEPS[reviewsStepIdx] || 0;
         const minGuestsVal = parseInt(guestsSelect.value, 10) || 0;
+
+        // Validación reactiva de fechas para ocultar o mostrar el mensaje de error
+        const checkinVal = (checkinInput && checkinInput.value) ? checkinInput.value.trim() : '';
+        const checkoutVal = (checkoutInput && checkoutInput.value) ? checkoutInput.value.trim() : '';
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+        let dateError = null;
+        if (checkinVal && checkinVal < todayStr) {
+          dateError = 'La fecha de llegada no puede ser anterior a hoy.';
+        } else if (checkinVal && checkoutVal && checkoutVal <= checkinVal) {
+          dateError = 'La fecha de salida debe ser posterior a la fecha de llegada.';
+        }
+
+        if (searchErrorAlert && searchErrorText) {
+          if (dateError) {
+            searchErrorText.textContent = dateError;
+            searchErrorAlert.classList.remove('hidden');
+          } else {
+            searchErrorAlert.classList.add('hidden');
+          }
+        }
 
         // Mostrar / ocultar icono de borrar destino
         if (clearDestinationBtn) {
@@ -553,8 +577,16 @@
         if (rating && parseFloat(rating) > 0) params.set('minRating', rating);
         if (reviews && parseInt(reviews, 10) > 0) params.set('minReviews', reviews);
         if (guests && guests > 0) params.set('guests', guests);
-        if (checkinInput && checkinInput.value) params.set('checkin', checkinInput.value);
-        if (checkoutInput && checkoutInput.value) params.set('checkout', checkoutInput.value);
+        if (checkinInput && checkinInput.value && checkinInput.value.trim()) {
+          params.set('checkin', checkinInput.value.trim());
+        } else {
+          params.delete('checkin');
+        }
+        if (checkoutInput && checkoutInput.value && checkoutInput.value.trim()) {
+          params.set('checkout', checkoutInput.value.trim());
+        } else {
+          params.delete('checkout');
+        }
 
         const newRelativePathQuery = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
         window.history.replaceState(null, '', newRelativePathQuery);
@@ -570,10 +602,18 @@
         if (guestsSelect) guestsSelect.value = '';
         if (checkinInput) checkinInput.value = '';
         if (checkoutInput) checkoutInput.value = '';
+        if (searchErrorAlert) searchErrorAlert.classList.add('hidden');
         filterProperties();
       }
 
       // Eventos de interacción en tiempo real
+      const filtersForm = document.getElementById('filters-form');
+      if (filtersForm) {
+        filtersForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          filterProperties();
+        });
+      }
       if (destinationInput) {
         destinationInput.addEventListener('input', filterProperties);
       }
@@ -601,9 +641,11 @@
       }
       if (checkinInput) {
         checkinInput.addEventListener('change', filterProperties);
+        checkinInput.addEventListener('input', filterProperties);
       }
       if (checkoutInput) {
         checkoutInput.addEventListener('change', filterProperties);
+        checkoutInput.addEventListener('input', filterProperties);
       }
       if (resetBtn) {
         resetBtn.addEventListener('click', resetAllFilters);
