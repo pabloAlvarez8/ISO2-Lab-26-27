@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 @Service
@@ -58,17 +59,16 @@ public class PropertyService {
             Integer minReviews,
             String q
     ) {
-        // Validación de fechas
-        if (checkin != null || checkout != null) {
-            if (checkin == null || checkout == null) {
-                return PropertySearchResult.error("Debes seleccionar tanto la fecha de llegada como la de salida.");
-            }
+        // Validación de fechas (opcionales)
+        if (checkin != null && checkout != null) {
             if (checkin.isBefore(LocalDate.now())) {
                 return PropertySearchResult.error("La fecha de llegada no puede ser anterior a hoy.");
             }
             if (!checkout.isAfter(checkin)) {
                 return PropertySearchResult.error("La fecha de salida debe ser posterior a la fecha de llegada.");
             }
+        } else if (checkin != null && checkin.isBefore(LocalDate.now())) {
+            return PropertySearchResult.error("La fecha de llegada no puede ser anterior a hoy.");
         }
 
         // Validación de huéspedes
@@ -109,6 +109,41 @@ public class PropertyService {
         );
 
         return PropertySearchResult.success(results);
+    }
+
+    public PropertySearchResult search(
+            String destination,
+            String checkin,
+            String checkout,
+            Integer guests,
+            String propertyType,
+            Double maxPrice,
+            Double minRating,
+            Integer minReviews,
+            String q
+    ) {
+        return search(
+                destination,
+                parseDate(checkin),
+                parseDate(checkout),
+                guests,
+                propertyType,
+                maxPrice,
+                minRating,
+                minReviews,
+                q
+        );
+    }
+
+    public LocalDate parseDate(String dateStr) {
+        if (dateStr == null || dateStr.isBlank() || "null".equalsIgnoreCase(dateStr.trim()) || "undefined".equalsIgnoreCase(dateStr.trim())) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(dateStr.trim());
+        } catch (DateTimeParseException e) {
+            return null;
+        }
     }
 
     private String normalizeString(String value) {
