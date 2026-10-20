@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+  <!-- Banner de bienvenida cuando el usuario ha iniciado sesión -->
+  <div id="welcome-banner" th:fragment="welcome-banner" th:if="${session.loggedUser != null}" class="bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 text-white shadow-sm transition-all duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <span class="text-xl">👋</span>
+        <p class="text-sm font-semibold">
+          ¡Bienvenido, <strong class="underline decoration-white/40" th:text="${session.loggedUser.name}">Usuario</strong>! Has iniciado sesión como 
+          <span class="bg-white/20 px-2 py-0.5 rounded text-xs tracking-wide uppercase font-bold" th:text="${session.loggedUser.role == 'LANDLORD' ? 'Propietario' : 'Inquilino'}">Inquilino</span>.
+        </p>
+      </div>
+      <button 
+        type="button" 
+        onclick="document.getElementById('welcome-banner').remove()" 
+        class="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/20 transition-colors flex items-center justify-center focus:outline-none" 
+        title="Cerrar aviso"
+        aria-label="Cerrar aviso"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</body>
+</html>

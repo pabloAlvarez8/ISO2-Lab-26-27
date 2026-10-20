@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout/head :: head('Buscador de Alojamientos')}">
+  <meta charset="UTF-8" />
+  <title>Buscador de Alojamientos | AlohaRent</title>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex flex-col justify-between">
+
+  <!-- Cabecera Global con Buscador Integrado -->
+  <div th:replace="~{fragments/layout/header :: navbar}"></div>
+
+  <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    
+    <!-- Breadcrumb / Header de la página -->
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <nav class="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-1">
+          <a href="/" class="hover:text-emerald-600 transition-colors">Inicio</a>
+          <span>/</span>
+          <span class="text-slate-800">Buscador</span>
+        </nav>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          Explora alojamientos en <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-sky-600">AlohaRent</span>
+        </h1>
+      </div>
+      
+      <!-- Contador de resultados reactivo -->
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200 shadow-xs">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="results-count" th:text="${#lists.size(properties)}">0</span> estancias disponibles
+        </span>
+      </div>
+    </div>
+
+    <!-- Alerta en caso de validación en servidor o cliente (ej. fechas incoherentes) -->
+    <div id="search-error-alert" th:classappend="${searchError != null} ? '' : 'hidden'" class="mb-6 px-5 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-center gap-3 shadow-sm">
+      <svg class="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      <span id="search-error-text" class="text-sm font-semibold" th:text="${searchError}">Error en la búsqueda</span>
+    </div>
+
+    <!-- Layout principal de 2 columnas -->
+    <div class="flex flex-col lg:flex-row gap-8 items-start">
+      
+      <!-- COLUMNA IZQUIERDA: Barra lateral fija (Sticky Sidebar) -->
+      <aside class="w-full lg:w-80 flex-shrink-0 lg:sticky lg:top-24 bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+            </svg>
+            <h2 class="text-base font-bold text-slate-900">Filtros de búsqueda</h2>
+          </div>
+          <button 
+            type="button" 
+            id="btn-reset-filters" 
+            class="text-xs font-semibold text-slate-500 hover:text-emerald-600 transition-colors hover:underline cursor-pointer"
+          >
+            Limpiar filtros
+          </button>
+        </div>
+
+        <form id="filters-form" action="/search" method="GET" class="space-y-5">
+          
+          <!-- Filtro 1: Destino / Ciudad / Texto -->
+          <div>
+            <label for="filter-destination" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Destino o Ciudad
+            </label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </div>
+              <input 
+                type="text" 
+                id="filter-destination" 
+                name="destination" 
+                th:value="${destination}"
+                placeholder="Ej. Madrid, Barcelona..." 
+                class="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+              />
+              <button 
+                type="button" 
+                id="btn-clear-destination" 
+                class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 hidden"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Filtro 2: Tipo de Inmueble -->
+          <div>
+            <label for="filter-type" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Tipo de Inmueble
+            </label>
+            <div class="relative">
+              <select 
+                id="filter-type" 
+                name="propertyType" 
+                class="w-full py-2.5 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all cursor-pointer"
+              >
+                <option value="" th:selected="${propertyType == null or propertyType == ''}">Todos los tipos</option>
+                <option value="Apartamento" th:selected="${propertyType == 'Apartamento'}">Apartamento</option>
+                <option value="Villa" th:selected="${propertyType == 'Villa'}">Villa</option>
+                <option value="Ático" th:selected="${propertyType == 'Ático'}">Ático</option>
+                <option value="Casa" th:selected="${propertyType == 'Casa'}">Casa tradicional</option>
+                <option value="Cabaña" th:selected="${propertyType == 'Cabaña'}">Cabaña rústica</option>
+                <option value="Chalet" th:selected="${propertyType == 'Chalet'}">Chalet señorial</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Filtro 3: Precio Máximo por noche (Slider interactivo al tope por defecto) -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="filter-price" class="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                Precio máximo
+              </label>
+              <span id="price-display" class="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                Hasta 400 € / noche
+              </span>
+            </div>
+            <input 
+              type="range" 
+              id="filter-price" 
+              name="maxPrice" 
+              min="50" 
+              max="400" 
+              step="10" 
+              th:value="${maxPrice != null ? maxPrice : 400}" 
+              class="w-full accent-emerald-600 cursor-pointer"
+            />
+            <div class="flex justify-between text-[11px] text-slate-400 mt-1 font-medium">
+              <span>50 €</span>
+              <span>400 € (Sin límite)</span>
+            </div>
+          </div>
+
+          <!-- Filtro 4: Valoración Mínima (0 a 5 estrellas, step 0.5) -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="filter-rating" class="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                Valoración mínima
+              </label>
+              <span id="rating-display" class="text-xs font-extrabold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 flex items-center gap-1">
+                <svg class="w-3.5 h-3.5 text-amber-500 fill-current" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
+                <span id="rating-text">Cualquiera</span>
+              </span>
+            </div>
+            <input 
+              type="range" 
+              id="filter-rating" 
+              name="minRating" 
+              min="0" 
+              max="5" 
+              step="0.5" 
+              th:value="${minRating != null ? minRating : 0}" 
+              class="w-full accent-amber-500 cursor-pointer"
+            />
+            <div class="flex justify-between text-[11px] text-slate-400 mt-1 font-medium">
+              <span>Cualquiera</span>
+              <span>★ 2.5</span>
+              <span>★ 5.0</span>
+            </div>
+          </div>
+
+          <!-- Filtro 5: Número de Reseñas Mínimas (Escala Exponencial 0 a +2500) -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="filter-reviews" class="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                Reseñas mínimas
+              </label>
+              <span id="reviews-display" class="text-xs font-extrabold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200">
+                Cualquiera (0+)
+              </span>
+            </div>
+            <input 
+              type="range" 
+              id="filter-reviews" 
+              name="reviewsStep" 
+              min="0" 
+              max="11" 
+              step="1" 
+              value="0" 
+              class="w-full accent-sky-600 cursor-pointer"
+            />
+            <div class="flex justify-between text-[11px] text-slate-400 mt-1 font-medium">
+              <span>0</span>
+              <span>100</span>
+              <span>+2500</span>
+            </div>
+          </div>
+
+          <!-- Filtro 6: Capacidad / Huéspedes (Hasta 6+ huéspedes sincronizado con Home) -->
+          <div>
+            <label for="filter-guests" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Viajeros mínimos
+            </label>
+            <select 
+              id="filter-guests" 
+              name="guests" 
+              class="w-full py-2.5 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all cursor-pointer"
+            >
+              <option value="" th:selected="${guests == null}">Cualquiera</option>
+              <option value="1" th:selected="${guests == 1}">1 Huésped</option>
+              <option value="2" th:selected="${guests == 2}">2 Huéspedes</option>
+              <option value="3" th:selected="${guests == 3}">3 Huéspedes</option>
+              <option value="4" th:selected="${guests == 4}">4 Huéspedes</option>
+              <option value="5" th:selected="${guests == 5}">5 Huéspedes</option>
+              <option value="6" th:selected="${guests != null and guests >= 6}">6+ Huéspedes</option>
+            </select>
+          </div>
+
+          <!-- Filtro 7: Fechas opcionales -->
+          <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
+            <div>
+              <label for="filter-checkin" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                Llegada
+              </label>
+              <input 
+                type="date" 
+                id="filter-checkin" 
+                name="checkin" 
+                th:value="${checkin}"
+                class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              />
+            </div>
+            <div>
+              <label for="filter-checkout" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                Salida
+              </label>
+              <input 
+                type="date" 
+                id="filter-checkout" 
+                name="checkout" 
+                th:value="${checkout}"
+                class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              />
+            </div>
+          </div>
+
+          <!-- Botón de acción para dispositivos móviles -->
+          <button 
+            type="submit" 
+            class="w-full lg:hidden py-3 bg-gradient-to-r from-emerald-600 to-sky-600 text-white font-bold rounded-xl shadow-md text-sm hover:opacity-95 transition-opacity"
+          >
+            Actualizar resultados
+          </button>
+
+        </form>
+      </aside>
+
+      <!-- COLUMNA DERECHA: Listado y Grid de Alojamientos -->
+      <section class="flex-1 min-w-0 w-full">
+        
+        <!-- Estado Vacío cuando no hay alojamientos o no coinciden filtros -->
+        <div id="no-results" class="text-center py-16 px-4 bg-white rounded-3xl border border-slate-200/80 shadow-sm max-w-xl mx-auto" th:classappend="${#lists.isEmpty(properties)} ? '' : 'hidden'">
+          <div class="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4 border border-emerald-100 shadow-xs">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+          </div>
+          <h2 class="text-xl font-bold text-slate-900 mb-2">No hay alojamientos disponibles</h2>
+          <p id="no-results-desc" class="text-sm text-slate-500 max-w-md mx-auto leading-relaxed mb-6">
+            Actualmente no hay inmuebles registrados en la plataforma. Esta sección estará activa cuando se conecte con el catálogo de alojamientos.
+          </p>
+          <button 
+            type="button" 
+            id="btn-empty-reset" 
+            class="hidden inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+          >
+            Mostrar todos los alojamientos
+          </button>
+        </div>
+
+        <!-- Grid de Tarjetas de Alojamientos -->
+        <div id="properties-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6" th:classappend="${#lists.isEmpty(properties)} ? 'hidden' : ''">
+          <div 
+            th:each="prop : ${properties}" 
+            class="property-card group bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col"
+            th:data-city="${#strings.toLowerCase(prop.city)}"
+            th:data-title="${#strings.toLowerCase(prop.title)}"
+            th:data-type="${#strings.toLowerCase(prop.propertyType)}"
+            th:data-price="${prop.pricePerNight}"
+            th:data-capacity="${prop.capacity}"
+            th:data-rating="${prop.rating != null ? prop.rating : 5.0}"
+            th:data-reviews="${prop.reviewCount != null ? prop.reviewCount : 0}"
+            th:data-description="${#strings.toLowerCase(prop.description)}"
+          >
+            <!-- Imagen con badge de tipo -->
+            <div class="relative h-48 overflow-hidden bg-slate-100">
+              <img 
+                th:src="${prop.imageUrl != null ? prop.imageUrl : 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80'}" 
+                th:alt="${prop.title}" 
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+              />
+              <span 
+                class="absolute top-3 left-3 bg-white/95 backdrop-blur-md text-slate-800 text-[11px] font-bold px-2.5 py-1 rounded-lg shadow-sm"
+                th:text="${prop.propertyType}"
+              >
+                Tipo
+              </span>
+            </div>
+
+            <!-- Contenido de la tarjeta -->
+            <div class="p-5 flex-grow flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between text-xs font-semibold mb-1.5 gap-2">
+                  <span class="flex items-center gap-1 text-emerald-600 truncate">
+                    <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span th:text="${prop.city}" class="truncate">Ciudad</span>
+                  </span>
+
+                  <!-- Badge de valoración y reseñas -->
+                  <div class="flex items-center gap-1 flex-shrink-0">
+                    <span class="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                      <svg class="w-3.5 h-3.5 text-amber-500 fill-current" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                      </svg>
+                      <span th:text="${#numbers.formatDecimal(prop.rating != null ? prop.rating : 5.0, 1, 'POINT', 1, 'POINT')}">4.5</span>
+                    </span>
+                    <span class="text-[11px] font-medium text-slate-400" 
+                          th:text="${prop.reviewCount != null and prop.reviewCount >= 2500 ? '(+2500)' : '(' + (prop.reviewCount != null ? prop.reviewCount : 0) + ')'}">
+                      (450)
+                    </span>
+                  </div>
+                </div>
+
+                <div class="text-[11px] font-medium text-slate-400 mb-1" th:text="'Hasta ' + ${prop.capacity} + ' huéspedes'">
+                  4 huéspedes
+                </div>
+
+                <a th:href="@{'/properties/' + ${prop.id}}" class="hover:underline">
+                  <h3 
+                    class="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors line-clamp-1 text-base mb-1" 
+                    th:text="${prop.title}"
+                  >
+                    Título del alojamiento
+                  </h3>
+                </a>
+
+                <p 
+                  class="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-4" 
+                  th:text="${prop.description}"
+                >
+                  Descripción del alojamiento
+                </p>
+              </div>
+
+              <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <div>
+                  <span class="text-lg font-extrabold text-slate-900" th:text="${#numbers.formatDecimal(prop.pricePerNight, 1, 'POINT', 0, 'POINT')} + ' €'">120 €</span>
+                  <span class="text-xs text-slate-500"> / noche</span>
+                </div>
+                <a th:href="@{'/properties/' + ${prop.id}}" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1 cursor-pointer">
+                  <span>Ver más</span>
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- Pie de Página Global -->
+  <footer th:replace="~{fragments/layout/footer :: footer}"></footer>
+
+  <!-- Script de Filtrado Interactivo en Tiempo Real -->
+  <script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', () => {
+      const destinationInput = document.getElementById('filter-destination');
+      const clearDestinationBtn = document.getElementById('btn-clear-destination');
+      const typeSelect = document.getElementById('filter-type');
+      const priceSlider = document.getElementById('filter-price');
+      const priceDisplay = document.getElementById('price-display');
+      const ratingSlider = document.getElementById('filter-rating');
+      const ratingText = document.getElementById('rating-text');
+      const reviewsSlider = document.getElementById('filter-reviews');
+      const reviewsDisplay = document.getElementById('reviews-display');
+      const guestsSelect = document.getElementById('filter-guests');
+      const checkinInput = document.getElementById('filter-checkin');
+      const checkoutInput = document.getElementById('filter-checkout');
+      const resetBtn = document.getElementById('btn-reset-filters');
+      const emptyResetBtn = document.getElementById('btn-empty-reset');
+      const noResultsDesc = document.getElementById('no-results-desc');
+      
+      const resultsCountEl = document.getElementById('results-count');
+      const searchErrorAlert = document.getElementById('search-error-alert');
+      const searchErrorText = document.getElementById('search-error-text');
+      const noResultsContainer = document.getElementById('no-results');
+      const propertiesGrid = document.getElementById('properties-grid');
+      const cards = Array.from(document.querySelectorAll('.property-card'));
+
+      // Tramos no lineales / exponenciales para número de reseñas
+      const REVIEW_STEPS = [0, 5, 10, 25, 50, 100, 250, 500, 1000, 1500, 2000, 2500];
+
+      // Inicializar slider de reseñas si el servidor pasó minReviews
+      const initialMinReviews = /*[[${minReviews != null ? minReviews : 0}]]*/ 0;
+      if (initialMinReviews > 0 && reviewsSlider) {
+        let stepIdx = 0;
+        for (let i = REVIEW_STEPS.length - 1; i >= 0; i--) {
+          if (initialMinReviews >= REVIEW_STEPS[i]) {
+            stepIdx = i;
+            break;
+          }
+        }
+        reviewsSlider.value = stepIdx;
+      }
+
+      // Función que aplica los filtros activos en tiempo real sobre las tarjetas
+      function filterProperties() {
+        const destinationVal = (destinationInput.value || '').trim().toLowerCase();
+        const typeVal = (typeSelect.value || '').trim().toLowerCase();
+        const maxPriceVal = parseFloat(priceSlider.value) || 400;
+        const minRatingVal = parseFloat(ratingSlider.value) || 0;
+        const reviewsStepIdx = parseInt(reviewsSlider.value, 10) || 0;
+        const minReviewsVal = REVIEW_STEPS[reviewsStepIdx] || 0;
+        const minGuestsVal = parseInt(guestsSelect.value, 10) || 0;
+
+        // Validación reactiva de fechas para ocultar o mostrar el mensaje de error
+        const checkinVal = (checkinInput && checkinInput.value) ? checkinInput.value.trim() : '';
+        const checkoutVal = (checkoutInput && checkoutInput.value) ? checkoutInput.value.trim() : '';
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+        let dateError = null;
+        if (checkinVal && checkinVal < todayStr) {
+          dateError = 'La fecha de llegada no puede ser anterior a hoy.';
+        } else if (checkinVal && checkoutVal && checkoutVal <= checkinVal) {
+          dateError = 'La fecha de salida debe ser posterior a la fecha de llegada.';
+        }
+
+        if (searchErrorAlert && searchErrorText) {
+          if (dateError) {
+            searchErrorText.textContent = dateError;
+            searchErrorAlert.classList.remove('hidden');
+          } else {
+            searchErrorAlert.classList.add('hidden');
+          }
+        }
+
+        // Mostrar / ocultar icono de borrar destino
+        if (clearDestinationBtn) {
+          if (destinationVal) {
+            clearDestinationBtn.classList.remove('hidden');
+          } else {
+            clearDestinationBtn.classList.add('hidden');
+          }
+        }
+
+        // Actualizar visualización del precio slider
+        if (priceDisplay) {
+          if (maxPriceVal >= 400) {
+            priceDisplay.textContent = 'Hasta 400 € (Sin límite)';
+          } else {
+            priceDisplay.textContent = `Hasta ${maxPriceVal} € / noche`;
+          }
+        }
+
+        // Actualizar visualización del filtro de valoración
+        if (ratingText) {
+          if (minRatingVal <= 0) {
+            ratingText.textContent = 'Cualquiera';
+          } else {
+            ratingText.textContent = `${minRatingVal.toFixed(1)} o más`;
+          }
+        }
+
+        // Actualizar visualización del filtro de reseñas (exponencial)
+        if (reviewsDisplay) {
+          if (minReviewsVal <= 0) {
+            reviewsDisplay.textContent = 'Cualquiera (0+)';
+          } else if (minReviewsVal >= 2500) {
+            reviewsDisplay.textContent = '+2500 reseñas';
+          } else {
+            reviewsDisplay.textContent = `Al menos ${minReviewsVal} reseñas`;
+          }
+        }
+
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+          const cardCity = card.getAttribute('data-city') || '';
+          const cardTitle = card.getAttribute('data-title') || '';
+          const cardType = card.getAttribute('data-type') || '';
+          const cardDesc = card.getAttribute('data-description') || '';
+          const cardPrice = parseFloat(card.getAttribute('data-price')) || 0;
+          const cardCapacity = parseInt(card.getAttribute('data-capacity'), 10) || 0;
+          const cardRating = parseFloat(card.getAttribute('data-rating')) || 5.0;
+          const cardReviews = parseInt(card.getAttribute('data-reviews'), 10) || 0;
+
+          // Comprobación de destino/ciudad o título
+          const matchDestination = !destinationVal || 
+            cardCity.includes(destinationVal) || 
+            cardTitle.includes(destinationVal) ||
+            cardDesc.includes(destinationVal);
+
+          // Comprobación de tipo de inmueble
+          const matchType = !typeVal || cardType === typeVal;
+
+          // Comprobación de precio máximo (si está al tope de 400, no filtra por precio)
+          const matchPrice = (maxPriceVal >= 400) || (cardPrice <= maxPriceVal);
+
+          // Comprobación de valoración mínima (de 0.5 en 0.5)
+          const matchRating = (minRatingVal === 0) || (cardRating >= minRatingVal);
+
+          // Comprobación de reseñas mínimas (escala exponencial)
+          const matchReviews = (minReviewsVal === 0) || (cardReviews >= minReviewsVal);
+
+          // Comprobación de viajeros mínimos
+          const matchGuests = minGuestsVal === 0 || cardCapacity >= minGuestsVal;
+
+          if (matchDestination && matchType && matchPrice && matchRating && matchReviews && matchGuests) {
+            card.style.display = '';
+            visibleCount++;
+          } else {
+            card.style.display = 'none';
+          }
+        });
+
+        // Actualizar contador y estado vacío
+        if (resultsCountEl) {
+          resultsCountEl.textContent = visibleCount;
+        }
+
+        if (visibleCount === 0) {
+          noResultsContainer.classList.remove('hidden');
+          propertiesGrid.classList.add('hidden');
+          if (cards.length > 0) {
+            if (noResultsDesc) {
+              noResultsDesc.textContent = 'No hemos encontrado alojamientos que cumplan los criterios seleccionados. Prueba a ajustar los filtros o el precio para ver más opciones.';
+            }
+            if (emptyResetBtn) {
+              emptyResetBtn.classList.remove('hidden');
+            }
+          } else {
+            if (noResultsDesc) {
+              noResultsDesc.textContent = 'Actualmente no hay inmuebles registrados en la plataforma. Esta sección estará activa cuando se conecte con el catálogo de alojamientos.';
+            }
+            if (emptyResetBtn) {
+              emptyResetBtn.classList.add('hidden');
+            }
+          }
+        } else {
+          noResultsContainer.classList.add('hidden');
+          propertiesGrid.classList.remove('hidden');
+        }
+
+        // Sincronizar URL del navegador sin recargar la página
+        updateBrowserUrl(destinationVal, typeVal, maxPriceVal, minRatingVal, minReviewsVal, minGuestsVal);
+      }
+
+      // Sincronización continua de la URL con history.replaceState
+      function updateBrowserUrl(dest, type, price, rating, reviews, guests) {
+        const params = new URLSearchParams();
+        if (dest) params.set('destination', dest);
+        if (type) params.set('propertyType', typeSelect.value);
+        if (price && parseFloat(price) < 400) params.set('maxPrice', price);
+        if (rating && parseFloat(rating) > 0) params.set('minRating', rating);
+        if (reviews && parseInt(reviews, 10) > 0) params.set('minReviews', reviews);
+        if (guests && guests > 0) params.set('guests', guests);
+        if (checkinInput && checkinInput.value && checkinInput.value.trim()) {
+          params.set('checkin', checkinInput.value.trim());
+        } else {
+          params.delete('checkin');
+        }
+        if (checkoutInput && checkoutInput.value && checkoutInput.value.trim()) {
+          params.set('checkout', checkoutInput.value.trim());
+        } else {
+          params.delete('checkout');
+        }
+
+        const newRelativePathQuery = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+        window.history.replaceState(null, '', newRelativePathQuery);
+      }
+
+      // Función para resetear todos los filtros a sus valores predeterminados
+      function resetAllFilters() {
+        if (destinationInput) destinationInput.value = '';
+        if (typeSelect) typeSelect.value = '';
+        if (priceSlider) priceSlider.value = 400;
+        if (ratingSlider) ratingSlider.value = 0;
+        if (reviewsSlider) reviewsSlider.value = 0;
+        if (guestsSelect) guestsSelect.value = '';
+        if (checkinInput) checkinInput.value = '';
+        if (checkoutInput) checkoutInput.value = '';
+        if (searchErrorAlert) searchErrorAlert.classList.add('hidden');
+        filterProperties();
+      }
+
+      // Eventos de interacción en tiempo real
+      const filtersForm = document.getElementById('filters-form');
+      if (filtersForm) {
+        filtersForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          filterProperties();
+        });
+      }
+      if (destinationInput) {
+        destinationInput.addEventListener('input', filterProperties);
+      }
+      if (clearDestinationBtn) {
+        clearDestinationBtn.addEventListener('click', () => {
+          destinationInput.value = '';
+          filterProperties();
+          destinationInput.focus();
+        });
+      }
+      if (typeSelect) {
+        typeSelect.addEventListener('change', filterProperties);
+      }
+      if (priceSlider) {
+        priceSlider.addEventListener('input', filterProperties);
+      }
+      if (ratingSlider) {
+        ratingSlider.addEventListener('input', filterProperties);
+      }
+      if (reviewsSlider) {
+        reviewsSlider.addEventListener('input', filterProperties);
+      }
+      if (guestsSelect) {
+        guestsSelect.addEventListener('change', filterProperties);
+      }
+      if (checkinInput) {
+        checkinInput.addEventListener('change', filterProperties);
+        checkinInput.addEventListener('input', filterProperties);
+      }
+      if (checkoutInput) {
+        checkoutInput.addEventListener('change', filterProperties);
+        checkoutInput.addEventListener('input', filterProperties);
+      }
+      if (resetBtn) {
+        resetBtn.addEventListener('click', resetAllFilters);
+      }
+      if (emptyResetBtn) {
+        emptyResetBtn.addEventListener('click', resetAllFilters);
+      }
+
+      // Aplicar filtros iniciales según los valores con los que vino la página
+      filterProperties();
+    });
+  </script>
+
+</body>
+</html>
