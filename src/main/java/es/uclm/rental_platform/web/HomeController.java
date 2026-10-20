@@ -3,10 +3,12 @@ package es.uclm.rental_platform.web;
 import es.uclm.rental_platform.domain.Property;
 import es.uclm.rental_platform.service.PropertySearchResult;
 import es.uclm.rental_platform.service.PropertyService;
-import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
@@ -21,6 +23,11 @@ public class HomeController {
         this.propertyService = propertyService;
     }
 
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
+    }
+
     @GetMapping("/")
     public String home() {
         return "home";
@@ -29,8 +36,10 @@ public class HomeController {
     @GetMapping("/search")
     public String search(
             @RequestParam(name = "destination", required = false) String destination,
-            @RequestParam(name = "checkin", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkin,
-            @RequestParam(name = "checkout", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkout,
+            @RequestParam(name = "checkin", required = false) String checkin,
+            @RequestParam(name = "fechaEntrada", required = false) String fechaEntrada,
+            @RequestParam(name = "checkout", required = false) String checkout,
+            @RequestParam(name = "fechaSalida", required = false) String fechaSalida,
             @RequestParam(name = "guests", required = false) Integer guests,
             @RequestParam(name = "propertyType", required = false) String propertyType,
             @RequestParam(name = "maxPrice", required = false) Double maxPrice,
@@ -39,15 +48,17 @@ public class HomeController {
             @RequestParam(name = "q", required = false) String q,
             Model model
     ) {
-        String effectiveDestination = destination;
-        if ((effectiveDestination == null || effectiveDestination.isBlank()) && q != null && !q.isBlank()) {
-            effectiveDestination = q;
-        }
+        String effectiveDestination = (destination != null && !destination.isBlank()) ? destination : q;
+        String rawCheckin = (checkin != null && !checkin.isBlank()) ? checkin : fechaEntrada;
+        String rawCheckout = (checkout != null && !checkout.isBlank()) ? checkout : fechaSalida;
+
+        LocalDate parsedCheckin = propertyService.parseDate(rawCheckin);
+        LocalDate parsedCheckout = propertyService.parseDate(rawCheckout);
 
         PropertySearchResult result = propertyService.search(
                 effectiveDestination,
-                checkin,
-                checkout,
+                parsedCheckin,
+                parsedCheckout,
                 guests,
                 propertyType,
                 maxPrice,
@@ -62,8 +73,8 @@ public class HomeController {
         model.addAttribute("filteredProperties", result.getProperties());
         model.addAttribute("searchError", result.getErrorMessage());
         model.addAttribute("destination", effectiveDestination != null ? effectiveDestination.trim() : "");
-        model.addAttribute("checkin", checkin);
-        model.addAttribute("checkout", checkout);
+        model.addAttribute("checkin", parsedCheckin != null ? parsedCheckin.toString() : "");
+        model.addAttribute("checkout", parsedCheckout != null ? parsedCheckout.toString() : "");
         model.addAttribute("guests", guests);
         model.addAttribute("propertyType", propertyType != null ? propertyType.trim() : "");
         model.addAttribute("maxPrice", maxPrice != null ? maxPrice : 400.0);
