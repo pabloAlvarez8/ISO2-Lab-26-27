@@ -136,8 +136,14 @@
             <span class="font-semibold">Capacidad:</span> <span th:text="${prop.capacity} + ' huéspedes'"></span>
           </p>
           <div class="border-t border-slate-100 pt-4 flex justify-between items-center">
-            <span class="text-xl font-extrabold text-emerald-600" th:text="${prop.pricePerNight} + ' €'">0.0 €</span>
-            <span class="text-sm text-slate-400 font-medium">/ noche</span>
+            <div class="flex items-baseline gap-1">
+              <span class="text-xl font-extrabold text-emerald-600" th:text="${prop.pricePerNight} + ' €'">0.0 €</span>
+              <span class="text-xs text-slate-400 font-medium">/ noche</span>
+            </div>
+            <a th:href="@{'/properties/' + ${prop.id} + '/book'}" class="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-sky-600 hover:from-emerald-700 hover:to-sky-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 hover:shadow-lg transition-all">
+              <span>Reservar</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+            </a>
           </div>
         </div>
 
