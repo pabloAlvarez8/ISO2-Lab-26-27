@@ -27,13 +27,16 @@ public class BookingController {
     private final BookingService bookingService;
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
+    private final es.uclm.rental_platform.service.ReviewService reviewService;
 
     public BookingController(BookingService bookingService,
                              PropertyRepository propertyRepository,
-                             UserRepository userRepository) {
+                             UserRepository userRepository,
+                             es.uclm.rental_platform.service.ReviewService reviewService) {
         this.bookingService = bookingService;
         this.propertyRepository = propertyRepository;
         this.userRepository = userRepository;
+        this.reviewService = reviewService;
     }
 
     private User getAuthenticatedUser(HttpSession session) {
@@ -66,6 +69,8 @@ public class BookingController {
         }
 
         model.addAttribute("property", property);
+        model.addAttribute("reviews", reviewService.getReviewsByProperty(propertyId));
+        model.addAttribute("reviewCount", reviewService.countReviewsByProperty(propertyId));
         model.addAttribute("defaultCheckIn", LocalDate.now().plusDays(1));
         model.addAttribute("defaultCheckOut", LocalDate.now().plusDays(4));
         model.addAttribute("defaultGuests", 2);
