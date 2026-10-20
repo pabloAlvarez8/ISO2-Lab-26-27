@@ -59,6 +59,9 @@
 
           <!-- Usuario autenticado -->
           <th:block th:if="${session.loggedUser != null}">
+            <a href="/my-bookings" class="text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-200 transition-colors">
+              Mis Reservas
+            </a>
             <a href="/profile" class="text-xs font-semibold text-sky-700 bg-sky-50 hover:bg-sky-100 px-3 py-1.5 rounded-lg border border-sky-200 transition-colors">
               Mi Perfil
             </a>
