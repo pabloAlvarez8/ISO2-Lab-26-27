@@ -28,3 +28,9 @@ Las decisiones se documentan indicando:
   - *Decisión:* Emplear una consulta JPQL con la condición canónica de intervalos `(b.checkIn < :checkOut AND b.checkOut > :checkIn)` filtrando por reservas en estado `CONFIRMED`. Esto permite que el check-in de una reserva coincida con el check-out de otra sin falso positivo.
   - *Consecuencias:* Detección atómica y óptima a nivel de base de datos H2 antes de crear el registro, evitando sobreventa de alojamientos.
 
+- **ADR-004 - Modelado monetario con BigDecimal y enmascaramiento de referencias de pago:**
+  - *Contexto:* Se requiere persistir pagos de reservas e inmuebles evitando errores de redondeo de coma flotante y sin almacenar datos sensibles de pago (PAN completo o CVV).
+  - *Decisión:* Utilizar `BigDecimal` (`precision = 10, scale = 2`) en la entidad `Payment`, asociaciones `@ManyToOne(fetch = FetchType.LAZY)` hacia `Booking` y `Property`, y almacenar únicamente una referencia enmascarada (últimos 4 dígitos de tarjeta, últimos 3 de teléfono Bizum o cuenta de PayPal).
+  - *Consecuencias:* Precisión exacta en importes, ausencia de `LazyInitializationException` mediante consultas `LEFT JOIN FETCH` en el repositorio y cumplimiento de privacidad en la persistencia.
+
+
