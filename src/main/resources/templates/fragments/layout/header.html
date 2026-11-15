@@ -47,6 +47,9 @@
           <a th:href="@{/search}" href="/search" class="hidden md:inline-flex text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors px-3 py-2 rounded-lg hover:bg-slate-50">
             Alojamientos
           </a>
+          <a th:href="@{/pagos}" href="/pagos" class="hidden md:inline-flex text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors px-3 py-2 rounded-lg hover:bg-slate-50">
+            Pagos
+          </a>
 
           <!-- Usuario NO autenticado -->
           <th:block th:if="${session.loggedUser == null}">
