@@ -22,6 +22,7 @@ public class SecurityConfig {
                 .requestMatchers("/", "/search", "/login", "/register", "/dashboard", "/css/**", "/js/**", "/images/**", "/favicon.ico", "/h2-console/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/properties/{id:[0-9]+}").permitAll()
                 .requestMatchers(HttpMethod.POST, "/properties/{id:[0-9]+}/reviews").permitAll()
+                .requestMatchers("/pagos/**", "/payments/**").permitAll()
                 .requestMatchers("/profile").authenticated()
                 .anyRequest().authenticated()
             )

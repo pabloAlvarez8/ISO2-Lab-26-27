@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout/head :: head('Pasarela de Pago')}">
+  <meta charset="UTF-8" />
+  <title>Pasarela de Pago | AlohaRent</title>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex flex-col justify-between">
+
+  <!-- Cabecera Global con Buscador Integrado -->
+  <div th:replace="~{fragments/layout/header :: navbar}"></div>
+
+  <main class="flex-grow max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+    <!-- Mensajes de feedback con fragmentos -->
+    <div th:replace="~{fragments/components/alerts :: alert-error(${error})}"></div>
+    <div th:replace="~{fragments/components/alerts :: alert-success(${success})}"></div>
+
+    <div class="bg-white rounded-3xl p-8 sm:p-10 shadow-xl shadow-slate-200/70 border border-slate-100">
+
+      <!-- Encabezado de la pasarela -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 mb-8">
+        <div>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold uppercase tracking-wider mb-2">
+            🔒 Pasarela de Pago Segura
+          </span>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900">
+            Finalizar y <span class="bg-gradient-to-r from-emerald-600 to-sky-600 bg-clip-text text-transparent">Confirmar Pago</span>
+          </h1>
+          <p class="text-sm text-slate-500 mt-1">Completa los datos para procesar tu pago de forma instantánea y segura.</p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <a th:href="@{/pagos}" class="text-xs font-semibold text-sky-700 hover:text-sky-800 px-3.5 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 border border-sky-200 transition-colors">
+            📋 Ver Historial de Pagos
+          </a>
+          <a th:href="${booking != null ? '/my-bookings' : (property != null ? '/properties/' + property.id : '/')}" class="text-xs font-semibold text-slate-500 hover:text-slate-800 px-3.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors">
+            ← Cancelar / Volver
+          </a>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+        <!-- Columna Izquierda (7 cols): Formulario de Pasarela de Pago -->
+        <div class="lg:col-span-7">
+          <form id="payment-form" th:action="@{/pagos}" method="POST" class="space-y-6">
+            <!-- Token CSRF incluido automáticamente por Thymeleaf -->
+            <input type="hidden" name="bookingId" th:value="${bookingId}" th:if="${bookingId != null}" />
+
+            <!-- Selector de alojamiento opcional si no viene de una reserva fija -->
+            <div th:if="${booking == null}">
+              <label for="propertySelect" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Alojamiento asociado (Opcional)
+              </label>
+              <select
+                id="propertySelect"
+                name="propertyId"
+                class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all cursor-pointer"
+              >
+                <option value="">-- Pago general o sin alojamiento específico --</option>
+                <option
+                  th:each="prop : ${properties}"
+                  th:value="${prop.id}"
+                  th:selected="${propertyId != null and propertyId == prop.id}"
+                  th:data-price="${prop.pricePerNight}"
+                  th:data-title="${prop.title}"
+                  th:text="${prop.title} + ' (' + ${prop.city} + ' - ' + ${prop.pricePerNight} + ' €/noche)'"
+                >
+                  Alojamiento
+                </option>
+              </select>
+            </div>
+            <input type="hidden" name="propertyId" th:value="${propertyId}" th:if="${booking != null and propertyId != null}" />
+
+            <!-- Concepto e Importe -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="sm:col-span-2">
+                <label for="concept" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Concepto del pago
+                </label>
+                <input
+                  type="text"
+                  id="concept"
+                  name="concept"
+                  th:value="${concept}"
+                  required
+                  maxlength="250"
+                  placeholder="Ej. Reserva de estancia en AlohaRent"
+                  class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
+                />
+              </div>
+
+              <div>
+                <label for="amount" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Importe (€)
+                </label>
+                <input
+                  type="number"
+                  id="amount"
+                  name="amount"
+                  th:value="${amount}"
+                  step="0.01"
+                  min="0.01"
+                  required
+                  th:readonly="${booking != null}"
+                  class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-emerald-700 text-sm font-extrabold focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
+                />
+              </div>
+            </div>
+
+            <!-- Selector visual de Método de Pago -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2.5">
+                Selecciona el método de pago
+              </label>
+
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <label class="method-card cursor-pointer relative flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 border-emerald-500 bg-emerald-50/40 text-center transition-all hover:bg-slate-50">
+                  <input type="radio" name="paymentMethod" value="TARJETA" class="sr-only" checked />
+                  <span class="text-xl mb-1">💳</span>
+                  <span class="text-xs font-bold text-slate-800">Tarjeta</span>
+                  <span class="text-[10px] text-slate-500">Crédito / Débito</span>
+                </label>
+
+                <label class="method-card cursor-pointer relative flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 border-slate-200 bg-white text-center transition-all hover:bg-slate-50">
+                  <input type="radio" name="paymentMethod" value="BIZUM" class="sr-only" th:checked="${selectedMethod == 'BIZUM'}" />
+                  <span class="text-xl mb-1">📱</span>
+                  <span class="text-xs font-bold text-slate-800">Bizum</span>
+                  <span class="text-[10px] text-slate-500">Pago móvil</span>
+                </label>
+
+                <label class="method-card cursor-pointer relative flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 border-slate-200 bg-white text-center transition-all hover:bg-slate-50">
+                  <input type="radio" name="paymentMethod" value="PAYPAL" class="sr-only" th:checked="${selectedMethod == 'PAYPAL'}" />
+                  <span class="text-xl mb-1">🌐</span>
+                  <span class="text-xs font-bold text-slate-800">PayPal</span>
+                  <span class="text-[10px] text-slate-500">Cuenta digital</span>
+                </label>
+
+                <label class="method-card cursor-pointer relative flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 border-slate-200 bg-white text-center transition-all hover:bg-slate-50">
+                  <input type="radio" name="paymentMethod" value="TRANSFERENCIA" class="sr-only" th:checked="${selectedMethod == 'TRANSFERENCIA'}" />
+                  <span class="text-xl mb-1">🏦</span>
+                  <span class="text-xs font-bold text-slate-800">Transferencia</span>
+                  <span class="text-[10px] text-slate-500">SEPA / IBAN</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Nombre del Titular (común a todos los métodos) -->
+            <div>
+              <label for="holderName" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Nombre completo del titular
+              </label>
+              <input
+                type="text"
+                id="holderName"
+                name="holderName"
+                th:value="${holderName}"
+                required
+                placeholder="Ej. Lucía Gómez Pérez"
+                class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
+              />
+            </div>
+
+            <!-- Campos específicos: TARJETA -->
+            <div id="fields-TARJETA" class="space-y-4 p-5 rounded-2xl bg-slate-50/80 border border-slate-200/80">
+              <div>
+                <label for="cardNumber" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Número de tarjeta (16 dígitos)
+                </label>
+                <input
+                  type="text"
+                  id="cardNumber"
+                  name="cardNumber"
+                  placeholder="4532 0150 1234 5678"
+                  maxlength="19"
+                  class="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-800 text-sm font-mono font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
+                />
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label for="expiryDate" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Fecha de caducidad (MM/AA)
+                  </label>
+                  <input
+                    type="text"
+                    id="expiryDate"
+                    name="expiryDate"
+                    placeholder="12/28"
+                    maxlength="5"
+                    class="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-800 text-sm font-mono font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label for="cvv" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Código CVV (3-4 dígitos)
+                  </label>
+                  <input
+                    type="password"
+                    id="cvv"
+                    name="cvv"
+                    placeholder="123"
+                    maxlength="4"
+                    class="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-800 text-sm font-mono font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Campos específicos: BIZUM -->
+            <div id="fields-BIZUM" class="hidden space-y-3 p-5 rounded-2xl bg-slate-50/80 border border-slate-200/80">
+              <label for="bizumPhone" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                Número de teléfono móvil vinculado a Bizum
+              </label>
+              <input
+                type="tel"
+                id="bizumPhone"
+                name="bizumPhone"
+                placeholder="600 123 456"
+                maxlength="15"
+                class="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-800 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
+              />
+              <p class="text-xs text-slate-500">Recibirás una clave de confirmación instantánea en tu aplicación bancaria.</p>
+            </div>
+
+            <!-- Campos específicos: PAYPAL -->
+            <div id="fields-PAYPAL" class="hidden space-y-3 p-5 rounded-2xl bg-slate-50/80 border border-slate-200/80">
+              <label for="paypalEmail" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                Correo electrónico de tu cuenta PayPal
+              </label>
+              <input
+                type="email"
+                id="paypalEmail"
+                name="paypalEmail"
+                placeholder="usuario@ejemplo.com"
+                class="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-800 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
+              />
+            </div>
+
+            <!-- Campos específicos: TRANSFERENCIA -->
+            <div id="fields-TRANSFERENCIA" class="hidden space-y-2 p-5 rounded-2xl bg-slate-50/80 border border-slate-200/80 text-xs text-slate-600">
+              <p class="font-bold text-slate-800">Orden de transferencia SEPA instantánea</p>
+              <p>IBAN Destino AlohaRent: <span class="font-mono font-bold text-slate-900">ES91 2100 0418 4502 0005 1332</span></p>
+              <p>Al pulsar en confirmar, quedará registrado el justificante de pago en el sistema.</p>
+            </div>
+
+            <!-- Botón principal de Confirmar y Pagar -->
+            <button
+              type="submit"
+              class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-700 hover:to-sky-700 text-white font-bold text-base shadow-lg shadow-emerald-600/25 hover:shadow-xl transition-all transform active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Confirmar y Pagar</span>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </button>
+
+          </form>
+        </div>
+
+        <!-- Columna Derecha (5 cols): Resumen de la Operación -->
+        <div class="lg:col-span-5 bg-gradient-to-br from-slate-50 to-emerald-50/40 rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-sm space-y-5">
+          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2 pb-3 border-b border-slate-200/70">
+            <span>🧾</span> Resumen de la Operación
+          </h3>
+
+          <!-- Si hay un inmueble asociado -->
+          <div th:if="${property != null}" class="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-2">
+            <span class="inline-block text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200" th:text="${property.type}">
+              Alojamiento
+            </span>
+            <h4 class="text-sm font-bold text-slate-900" th:text="${property.title}">Título del Inmueble</h4>
+            <p class="text-xs text-slate-500" th:text="${property.address} + ' · ' + ${property.city}">Dirección · Ciudad</p>
+          </div>
+
+          <!-- Si hay una reserva asociada -->
+          <div th:if="${booking != null}" class="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-2 text-xs">
+            <div class="flex justify-between">
+              <span class="text-slate-500">Reserva asociada:</span>
+              <span class="font-bold text-slate-800" th:text="'#' + ${booking.id}">#1</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Entrada (Check-in):</span>
+              <span class="font-semibold text-slate-800" th:text="${#temporals.format(booking.checkIn, 'dd/MM/yyyy')}">01/12/2026</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Salida (Check-out):</span>
+              <span class="font-semibold text-slate-800" th:text="${#temporals.format(booking.checkOut, 'dd/MM/yyyy')}">05/12/2026</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Huéspedes:</span>
+              <span class="font-semibold text-slate-800" th:text="${booking.guests} + ' personas'">2 personas</span>
+            </div>
+          </div>
+
+          <!-- Desglose económico -->
+          <div class="space-y-3 text-sm pt-2">
+            <div class="flex justify-between items-center text-slate-600">
+              <span>Concepto:</span>
+              <span id="summary-concept" class="font-semibold text-slate-800 text-right max-w-[200px] truncate" th:text="${concept}">Concepto</span>
+            </div>
+            <div class="flex justify-between items-center text-slate-600">
+              <span>Tasas de gestión AlohaRent:</span>
+              <span class="font-semibold text-emerald-600">0.00 € (Gratis)</span>
+            </div>
+            <div class="pt-3 border-t border-slate-200 flex justify-between items-baseline">
+              <span class="text-sm font-bold uppercase tracking-wider text-slate-700">Total a pagar:</span>
+              <span id="summary-amount" class="text-2xl font-black text-emerald-600" th:text="${amount} + ' €'">180.00 €</span>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-white border border-slate-200 text-xs text-slate-600 space-y-1.5 shadow-xs">
+            <p class="font-bold text-slate-800 flex items-center gap-1.5">
+              <span>🛡️</span> Protección de Pago AlohaRent
+            </p>
+            <p>Transacción cifrada y persistida en la base de datos con confirmación inmediata de estado.</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Pie de Página Global -->
+  <footer th:replace="~{fragments/layout/footer :: footer}"></footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const methodRadios = document.querySelectorAll('input[name="paymentMethod"]');
+      const methodCards = document.querySelectorAll('.method-card');
+      const sections = {
+        TARJETA: document.getElementById('fields-TARJETA'),
+        BIZUM: document.getElementById('fields-BIZUM'),
+        PAYPAL: document.getElementById('fields-PAYPAL'),
+        TRANSFERENCIA: document.getElementById('fields-TRANSFERENCIA')
+      };
+
+      const cardNumber = document.getElementById('cardNumber');
+      const expiryDate = document.getElementById('expiryDate');
+      const cvv = document.getElementById('cvv');
+      const bizumPhone = document.getElementById('bizumPhone');
+      const paypalEmail = document.getElementById('paypalEmail');
+
+      const amountInput = document.getElementById('amount');
+      const conceptInput = document.getElementById('concept');
+      const summaryAmount = document.getElementById('summary-amount');
+      const summaryConcept = document.getElementById('summary-concept');
+      const propertySelect = document.getElementById('propertySelect');
+
+      function updateMethodUI() {
+        let selected = 'TARJETA';
+        methodRadios.forEach((radio, idx) => {
+          const card = methodCards[idx];
+          if (radio.checked) {
+            selected = radio.value;
+            card.classList.add('border-emerald-500', 'bg-emerald-50/40');
+            card.classList.remove('border-slate-200', 'bg-white');
+          } else {
+            card.classList.remove('border-emerald-500', 'bg-emerald-50/40');
+            card.classList.add('border-slate-200', 'bg-white');
+          }
+        });
+
+        Object.keys(sections).forEach(key => {
+          if (sections[key]) {
+            sections[key].classList.toggle('hidden', key !== selected);
+          }
+        });
+
+        if (cardNumber) cardNumber.required = (selected === 'TARJETA');
+        if (expiryDate) expiryDate.required = (selected === 'TARJETA');
+        if (cvv) cvv.required = (selected === 'TARJETA');
+        if (bizumPhone) bizumPhone.required = (selected === 'BIZUM');
+        if (paypalEmail) paypalEmail.required = (selected === 'PAYPAL');
+      }
+
+      methodRadios.forEach(radio => radio.addEventListener('change', updateMethodUI));
+
+      if (amountInput && summaryAmount) {
+        amountInput.addEventListener('input', () => {
+          const val = parseFloat(amountInput.value);
+          summaryAmount.textContent = (!isNaN(val) && val > 0 ? val.toFixed(2) : '0.00') + ' €';
+        });
+      }
+
+      if (conceptInput && summaryConcept) {
+        conceptInput.addEventListener('input', () => {
+          summaryConcept.textContent = conceptInput.value || 'Reserva en AlohaRent';
+        });
+      }
+
+      if (propertySelect) {
+        propertySelect.addEventListener('change', () => {
+          const opt = propertySelect.options[propertySelect.selectedIndex];
+          const price = opt ? opt.getAttribute('data-price') : null;
+          const title = opt ? opt.getAttribute('data-title') : null;
+          if (price && amountInput) {
+            amountInput.value = parseFloat(price).toFixed(2);
+            amountInput.dispatchEvent(new Event('input'));
+          }
+          if (title && conceptInput) {
+            conceptInput.value = 'Estancia en ' + title;
+            conceptInput.dispatchEvent(new Event('input'));
+          }
+        });
+      }
+
+      updateMethodUI();
+    });
+  </script>
+
+</body>
+</html>
+

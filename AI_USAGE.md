@@ -122,3 +122,11 @@ For each relevant AI-assisted task, record:
 - **AI Proposal Summary:** Updated `home.html` to include a header image container (`relative h-48 overflow-hidden bg-slate-100`) for each property card, evaluating `prop.imageUrl` with a high-resolution Unsplash fallback, repositioning the accommodation type badge over the image, and wrapping the image in an anchor linking to `/properties/{id}`; documented risk R-10 in `docs/risks/README.md`.
 - **Human Review & Adjustments:** Human developer reviewed and approved the implementation plan prior to modification.
 - **Verification Executed:** Executed `.\mvnw.cmd test` (67/67 tests passing) and `.\mvnw.cmd verify` (DoD required) with `BUILD SUCCESS`.
+
+### Entry 1.15 — Persistent Payment Gateway & Transaction History Vertical Slice (feat/20-pago)
+- **Date:** 2026-11-15
+- **Branch / Task:** `feat/20-pago` — Implement complete payment functionality (Issue #20) across backend JPA persistence, business validation service, web controller, and Thymeleaf views.
+- **AI Proposal Summary:** Created `Payment` JPA entity (`@Table(name = "payments")`) with `BigDecimal` amount, `PaymentMethod` and `PaymentStatus` enums, masked `paymentReference`, and optional `FetchType.LAZY` associations to `Booking` and `Property`; added `PaymentRepository` with `LEFT JOIN FETCH` ordered history queries; implemented `PaymentService` with strict validation (amount > 0, required holder, method-specific format checks for Card/Bizum/PayPal, PAN/CVV masking, and automatic `PENDING` to `CONFIRMED` booking transition); created `PaymentController` (`/pagos/nuevo`, `POST /pagos`, `GET /pagos`) and Thymeleaf views (`payment/payment-form.html`, `payment/payment-list.html`) integrated into `header.html`, `my-bookings.html`, and `property-detail.html`.
+- **Human Review & Adjustments:** Human developer reviewed and approved the layered implementation plan and structured the commit history by architectural layer.
+- **Verification Executed:** Executed `./mvnw clean verify` passing 100% (67/67 tests passing, `BUILD SUCCESS`).
+

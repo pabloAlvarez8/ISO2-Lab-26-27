@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout/head :: head('Historial de Pagos')}">
+  <meta charset="UTF-8" />
+  <title>Historial de Pagos | AlohaRent</title>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex flex-col justify-between">
+
+  <!-- Cabecera Global con Buscador Integrado -->
+  <div th:replace="~{fragments/layout/header :: navbar}"></div>
+
+  <main class="flex-grow max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+    <!-- Mensajes de confirmación o alerta -->
+    <div th:replace="~{fragments/components/alerts :: alert-error(${error})}"></div>
+    <div th:replace="~{fragments/components/alerts :: alert-success(${success})}"></div>
+
+    <!-- Encabezado y botón de nuevo pago -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+      <div>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold uppercase tracking-wider mb-2">
+          💳 Registro de Transacciones
+        </span>
+        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">
+          Historial de <span class="bg-gradient-to-r from-emerald-600 to-sky-600 bg-clip-text text-transparent">Pagos</span>
+        </h1>
+        <p class="text-sm text-slate-500 mt-1">Consulta todos los pagos confirmados y registrados en la base de datos.</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a th:href="@{/my-bookings}" th:if="${session.loggedUser != null}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:text-emerald-600 hover:border-emerald-300 font-semibold text-xs shadow-sm transition-all">
+          <span>📅 Mis Reservas</span>
+        </a>
+        <a th:href="@{/pagos/nuevo}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-sky-600 hover:from-emerald-700 hover:to-sky-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 hover:shadow-lg transition-all">
+          <span>+ Registrar Nuevo Pago</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Estado vacío si aún no hay pagos -->
+    <div th:if="${#lists.isEmpty(payments)}" class="bg-white rounded-3xl p-12 text-center border border-slate-100 shadow-xl shadow-slate-200/60 max-w-xl mx-auto">
+      <div class="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-3xl mx-auto mb-4">
+        💳
+      </div>
+      <h2 class="text-xl font-bold text-slate-900 mb-2">Todavía no hay pagos registrados</h2>
+      <p class="text-sm text-slate-500 mb-6">Puedes realizar el pago de una reserva desde la sección de Mis Reservas o registrar un nuevo pago desde la pasarela.</p>
+      <a th:href="@{/pagos/nuevo}" class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-sky-600 hover:from-emerald-700 hover:to-sky-700 text-white font-bold text-sm shadow-md shadow-emerald-600/20 transition-all">
+        <span>Ir a la Pasarela de Pago</span>
+      </a>
+    </div>
+
+    <!-- Tabla de Pagos Registrados -->
+    <div th:unless="${#lists.isEmpty(payments)}" class="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-50/90 border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              <th class="py-4 px-6">ID</th>
+              <th class="py-4 px-6">Concepto / Alojamiento</th>
+              <th class="py-4 px-6">Titular y Referencia</th>
+              <th class="py-4 px-6">Método</th>
+              <th class="py-4 px-6">Fecha</th>
+              <th class="py-4 px-6">Importe</th>
+              <th class="py-4 px-6 text-right">Estado</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 text-sm">
+            <tr th:each="p : ${payments}" class="hover:bg-slate-50/70 transition-colors">
+              <td class="py-4 px-6 font-mono font-bold text-slate-700" th:text="'#' + ${p.id}">#1</td>
+
+              <td class="py-4 px-6">
+                <div class="font-bold text-slate-900" th:text="${p.concept}">Concepto del pago</div>
+                <div th:if="${p.property != null}" class="text-xs text-slate-500 mt-0.5">
+                  <span>🏡 </span>
+                  <a th:href="@{'/properties/' + ${p.property.id}}" class="hover:text-emerald-600 hover:underline" th:text="${p.property.title} + ' (' + ${p.property.city} + ')'">Alojamiento</a>
+                </div>
+              </td>
+
+              <td class="py-4 px-6">
+                <div class="font-semibold text-slate-800" th:text="${p.holderName}">Titular</div>
+                <div class="text-xs font-mono text-slate-500" th:text="${p.paymentReference}">Tarjeta •••• 1234</div>
+              </td>
+
+              <td class="py-4 px-6">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold" th:text="${p.paymentMethod.displayName}">
+                  Tarjeta
+                </span>
+              </td>
+
+              <td class="py-4 px-6 text-xs text-slate-600 font-medium" th:text="${#temporals.format(p.paymentDate, 'dd/MM/yyyy HH:mm')}">
+                13/11/2026 14:30
+              </td>
+
+              <td class="py-4 px-6">
+                <span class="text-base font-extrabold text-slate-900" th:text="${#numbers.formatDecimal(p.amount, 1, 'POINT', 2, 'POINT')} + ' €'">180.00 €</span>
+              </td>
+
+              <td class="py-4 px-6 text-right">
+                <span th:if="${p.status.name() == 'COMPLETADO'}" class="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                  ✓ COMPLETADO
+                </span>
+                <span th:if="${p.status.name() == 'PENDIENTE'}" class="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                  ⏳ PENDIENTE
+                </span>
+                <span th:if="${p.status.name() == 'RECHAZADO'}" class="inline-flex items-center gap-1 text-xs font-bold text-red-700 bg-red-50 px-3 py-1 rounded-full border border-red-200">
+                  ✕ RECHAZADO
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Pie de Página Global -->
+  <footer th:replace="~{fragments/layout/footer :: footer}"></footer>
+
+</body>
+</html>
+
